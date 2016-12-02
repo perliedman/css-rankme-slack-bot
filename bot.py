@@ -32,6 +32,7 @@ def print_headshots():
 # constants
 BOT_ID = os.environ.get("BOT_ID")
 AT_BOT = "<@" + BOT_ID + ">"
+CHANNEL = '#lanparty'
 
 
 def handle_command(command, channel):
@@ -71,22 +72,54 @@ def check_active():
     score = c.execute('select sum(score) from rankme').fetchone()[0]
     now = time.time()
 
-    print 'Score is %d at % .0f' % (score, now)
+    print 'Score is %d; last score is %d at % .0f' % (score, last_score if not last_score is None else -1, now)
 
     if not last_score is None and score != last_score:
         if not is_active:
             is_active = True
             print 'The game has begun'
-            slack_client.api_call("chat.postMessage", channel='#lanparty',
+            slack_client.api_call("chat.postMessage", channel=CHANNEL,
                                   text='The game is on! :c4:', as_user=True)
-        last_score = score
+            c = conn.cursor()
+            c.execute('insert into game (start_time) values (?)', (now,))
+            game_id = c.lastrowid
+            c.execute("""insert into game_stats (game_id, steam,
+                name, lastip, score, kills, deaths, suicides, tk, shots, hits, headshots, connected, rounds_tr, rounds_ct, lastconnect,
+                knife,glock,usp,p228,deagle,
+                elite ,fiveseven ,m3 ,xm1014 ,mac10 ,
+                tmp ,mp5navy ,ump45 ,p90 ,galil ,
+                ak47 ,sg550 ,famas ,m4a1 ,aug ,
+                scout ,sg552 ,awp ,g3sg1 ,m249 ,
+                hegrenade ,flashbang ,smokegrenade , head ,
+                chest , stomach , left_arm , right_arm ,
+                left_leg , right_leg ,c4_planted ,c4_exploded ,
+                c4_defused ,ct_win , tr_win , hostages_rescued ,
+                vip_killed , vip_escaped , vip_played) select ?, steam,
+                name, lastip, score, kills, deaths, suicides, tk, shots, hits, headshots, connected, rounds_tr, rounds_ct, lastconnect,
+                knife,glock,usp,p228,deagle,
+                elite ,fiveseven ,m3 ,xm1014 ,mac10 ,
+                tmp ,mp5navy ,ump45 ,p90 ,galil ,
+                ak47 ,sg550 ,famas ,m4a1 ,aug ,
+                scout ,sg552 ,awp ,g3sg1 ,m249 ,
+                hegrenade ,flashbang ,smokegrenade , head ,
+                chest , stomach , left_arm , right_arm ,
+                left_leg , right_leg ,c4_planted ,c4_exploded ,
+                c4_defused ,ct_win , tr_win , hostages_rescued ,
+                vip_killed , vip_escaped , vip_played from rankme""", (game_id,))
+            conn.commit()
+
         last_active = now
     elif not last_active is None and now - last_active > 60:
         is_active = False
         print 'The game has ended'
-        slack_client.api_call("chat.postMessage", channel='#lanparty',
-                              text='http://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I\n\n' + print_score(), as_user=True)
+        slack_client.api_call("chat.postMessage", channel=CHANNEL,
+                              text='Game over man! Game over!\n\n```' + print_score() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
+        c = conn.cursor()
+        last_game_id = c.execute('select max(id) from game').fetchone()[0]
+        c.execute('update game set end_time=? where id=?', (now, last_game_id))
+        conn.commit()
 
+    last_score = score
 
 if __name__ == "__main__":
     slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
