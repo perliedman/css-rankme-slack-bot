@@ -2,10 +2,10 @@ import sqlite3
 from slackclient import SlackClient
 import time
 import os
-
+import sys
 
 def print_score():
-    conn = sqlite3.connect('rankme.sq3')
+    conn = sqlite3.connect(sys.argv[1])
 
     c = conn.cursor()
 
