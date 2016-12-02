@@ -4,33 +4,42 @@ import time
 import os
 import sys
 
-def print_score():
+
+def format_list(query, header, format):
     conn = sqlite3.connect(sys.argv[1])
 
     c = conn.cursor()
-
-    score_query = 'select name, (cast(score as float) - 1000) / (rounds_tr + rounds_ct) as spr, score from rankme order by spr desc'
-
     i = 1
-    lines = []
-    for row in c.execute(score_query):
-        lines.append('%d. %20s%8.02f%6d' % (i, row[0], row[1], row[2]))
+    lines = [header]
+    for row in c.execute(query):
+        lines.append(format % ((i,) + row))
         i += 1
 
     return '\n'.join(lines)
 
 
+def print_score():
+    return format_list('select name, (cast(score as float) - 1000) / (rounds_tr + rounds_ct) as spr, score, cast(kills as float)/deaths from rankme order by spr desc',
+                       '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
+                       '%2d.%20s%8.02f%6d%6.02f')
+
+
+def print_headshots():
+    return format_list('select name, cast(headshots as float) / (rounds_tr + rounds_ct) as spr, headshots from rankme order by spr desc',
+                       '%23s%8s%6s' % ('Nick', 'HShot/r', 'Total'),
+                       '%d. %20s%8.02f%6d')
+
 # constants
 BOT_ID = os.environ.get("BOT_ID")
 AT_BOT = "<@" + BOT_ID + ">"
-EXAMPLE_COMMAND = "rankme"
 
 
 def handle_command(command, channel):
-    response = "Not sure what you mean. Use the *" + EXAMPLE_COMMAND + \
-               "* command with numbers, delimited by spaces."
-    if command.startswith(EXAMPLE_COMMAND):
+    response = "Not sure what you mean. Try *ranking* or *headshots*."
+    if command.startswith('ranking'):
         response = '```\n' + print_score() + '```\n:cs: :c4: :cs:'
+    elif command.startswith('headshots'):
+        response = '```\n' + print_headshots() + '```\n:disappointed_relieved::gun:'
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
