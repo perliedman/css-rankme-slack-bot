@@ -1,0 +1,6 @@
+backports.ssl-match-hostname==3.5.0.1
+pkg-resources==0.0.0
+requests==2.12.3
+six==1.10.0
+slackclient==1.0.2
+websocket-client==0.39.0
