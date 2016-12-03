@@ -5,8 +5,6 @@ import os
 import sys
 
 
-conn = sqlite3.connect(sys.argv[1])
-
 def format_list(query, header, format):
     c = conn.cursor()
     i = 1
@@ -29,6 +27,28 @@ def print_headshots():
                        '%23s%8s%6s' % ('Nick', 'HShot/r', 'Total'),
                        '%d. %20s%8.02f%6d')
 
+
+def print_last_game():
+    return format_list("""
+                        select
+                            lg.name,
+                            lg.rounds_tr-pg.rounds_tr+lg.rounds_ct-pg.rounds_ct as rounds,
+                            lg.kills-pg.kills as kills,
+                            lg.deaths-pg.deaths as deaths,
+                            case
+                                when lg.deaths-pg.deaths > 0 then (cast(lg.kills as float)-pg.kills)/(lg.deaths - pg.deaths)
+                                else 0
+                            end as kdr,
+                            lg.score-pg.score as score
+                        from game_stats as lg
+                        inner join game_stats as pg on lg.steam=pg.steam
+                        where
+                            lg.game_id=(select max(id) from game)
+                            and pg.game_id=(select max(id) from game where id < lg.game_id)
+                        order by score desc""",
+                       '%23s%7s%6s%7s%6s%6s' % ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Score'),
+                       '%d. %20s%7d%6d%7d%6.02f%6d')
+
 # constants
 BOT_ID = os.environ.get("BOT_ID")
 AT_BOT = "<@" + BOT_ID + ">"
@@ -41,6 +61,8 @@ def handle_command(command, channel):
         response = '```\n' + print_score() + '```\n:cs: :c4: :cs:'
     elif command.startswith('headshots'):
         response = '```\n' + print_headshots() + '```\n:disappointed_relieved::gun:'
+    elif command.startswith('last'):
+        response = '```\n' + print_last_game() + '```\n:c4:'
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
@@ -113,7 +135,7 @@ def check_active():
         is_active = False
         print 'The game has ended'
         slack_client.api_call("chat.postMessage", channel=CHANNEL,
-                              text='Game over man! Game over!\n\n```' + print_score() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
+                              text='Game over man! Game over!\n\n```' + print_last_game() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
         c = conn.cursor()
         last_game_id = c.execute('select max(id) from game').fetchone()[0]
         c.execute('update game set end_time=? where id=?', (now, last_game_id))
@@ -127,6 +149,7 @@ if __name__ == "__main__":
     while True:
         try:
             slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+            conn = sqlite3.connect(sys.argv[1])
             if slack_client.rtm_connect():
                 print("Bot connected and running.")
                 count = 0
