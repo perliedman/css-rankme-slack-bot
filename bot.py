@@ -122,22 +122,27 @@ def check_active():
     last_score = score
 
 if __name__ == "__main__":
-    slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
     READ_WEBSOCKET_DELAY = 1  # 1 second delay between reading from firehose
 
-    if slack_client.rtm_connect():
-        print("Bot connected and running.")
-        count = 0
-        while True:
-            if count % 10 == 0:
-                check_active()
+    while True:
+        try:
+            slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+            if slack_client.rtm_connect():
+                print("Bot connected and running.")
+                count = 0
+                while True:
+                    if count % 10 == 0:
+                        check_active()
 
-            count += 1
+                    count += 1
 
-            command, channel = parse_slack_output(slack_client.rtm_read())
-            if command and channel:
-                print 'Received "%s" on channel %s' % (command, channel)
-                handle_command(command, channel)
-            time.sleep(READ_WEBSOCKET_DELAY)
-    else:
-        print("Connection failed. Invalid Slack token or bot ID?")
+                    command, channel = parse_slack_output(slack_client.rtm_read())
+                    if command and channel:
+                        print 'Received "%s" on channel %s' % (command, channel)
+                        handle_command(command, channel)
+                    time.sleep(READ_WEBSOCKET_DELAY)
+            else:
+                print("Connection failed. Invalid Slack token or bot ID?")
+        except Exception, e:
+            print 'Unexpected error; sleeping one minute', e
+            time.sleep(60)
