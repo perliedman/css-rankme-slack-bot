@@ -28,7 +28,7 @@ def print_headshots():
                        '%d. %20s%8.02f%6d')
 
 
-def print_last_game(rel):
+def print_last_game(rel=1):
     return format_list("""
                         select
                             lg.name,
@@ -44,7 +44,7 @@ def print_last_game(rel):
                         inner join game_stats as pg on lg.steam=pg.steam
                         where
                             lg.game_id=(select max(id) from game)
-                            and pg.game_id=(select id from game where id < lg.game_id order by id desc limit offset ?)
+                            and pg.game_id=(select id from game where id < lg.game_id order by id desc limit 100 offset ?)
                         order by score desc""",
                        '%23s%7s%6s%7s%6s%6s' % ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Score'),
                        '%d. %20s%7d%6d%7d%6.02f%6d',
