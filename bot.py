@@ -5,11 +5,11 @@ import os
 import sys
 
 
-def format_list(query, header, format):
+def format_list(query, header, format, params=None):
     c = conn.cursor()
     i = 1
     lines = [header]
-    for row in c.execute(query):
+    for row in c.execute(query, params):
         lines.append(format % ((i,) + row))
         i += 1
 
@@ -28,7 +28,7 @@ def print_headshots():
                        '%d. %20s%8.02f%6d')
 
 
-def print_last_game():
+def print_last_game(rel):
     return format_list("""
                         select
                             lg.name,
@@ -44,10 +44,11 @@ def print_last_game():
                         inner join game_stats as pg on lg.steam=pg.steam
                         where
                             lg.game_id=(select max(id) from game)
-                            and pg.game_id=(select max(id) from game where id < lg.game_id)
+                            and pg.game_id=(select id from game where id < lg.game_id order by id desc limit offset ?)
                         order by score desc""",
                        '%23s%7s%6s%7s%6s%6s' % ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Score'),
-                       '%d. %20s%7d%6d%7d%6.02f%6d')
+                       '%d. %20s%7d%6d%7d%6.02f%6d',
+                       (rel-1,))
 
 # constants
 BOT_ID = os.environ.get("BOT_ID")
@@ -62,7 +63,12 @@ def handle_command(command, channel):
     elif command.startswith('headshots'):
         response = '```\n' + print_headshots() + '```\n:disappointed_relieved::gun:'
     elif command.startswith('last'):
-        response = '```\n' + print_last_game() + '```\n:c4:'
+        parts = command.split(' ')
+        try:
+            rel = int(parts[-1])
+        except ValueError:
+            rel = 1
+        response = '```\n' + print_last_game(rel) + '```\n:c4:'
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
@@ -131,15 +137,16 @@ def check_active():
             conn.commit()
 
         last_active = now
-    elif not last_active is None and now - last_active > 60:
-        is_active = False
-        print 'The game has ended'
-        slack_client.api_call("chat.postMessage", channel=CHANNEL,
-                              text='Game over man! Game over!\n\n```' + print_last_game() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
-        c = conn.cursor()
-        last_game_id = c.execute('select max(id) from game').fetchone()[0]
-        c.execute('update game set end_time=? where id=?', (now, last_game_id))
-        conn.commit()
+    elif not last_active is None and now - last_active > 120:
+        if is_active:
+            is_active = False
+            print 'The game has ended'
+            slack_client.api_call("chat.postMessage", channel=CHANNEL,
+                                  text='Game over man! Game over!\n\n```' + print_last_game() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
+            c = conn.cursor()
+            last_game_id = c.execute('select max(id) from game').fetchone()[0]
+            c.execute('update game set end_time=? where id=?', (now, last_game_id))
+            conn.commit()
 
     last_score = score
 
