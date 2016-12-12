@@ -40,11 +40,10 @@ def print_last_game(rel=1):
                                 else 0
                             end as kdr,
                             lg.score-pg.score as score
-                        from game_stats as lg
+                        from rankme as lg
                         inner join game_stats as pg on lg.steam=pg.steam
                         where
-                            lg.game_id=(select max(id) from game)
-                            and pg.game_id=(select id from game where id < lg.game_id order by id desc limit 100 offset ?)
+                            pg.game_id=(select id from game order by id desc limit 100 offset ?)
                             and rounds > 0
                         order by score desc""",
                        '%23s%7s%6s%7s%6s%6s' % ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Score'),
