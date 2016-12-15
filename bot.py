@@ -5,7 +5,7 @@ import os
 import sys
 
 
-def format_list(query, header, format, params=None):
+def format_list(query, header, format, params=()):
     c = conn.cursor()
     i = 1
     lines = [header]
