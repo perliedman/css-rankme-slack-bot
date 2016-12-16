@@ -3,6 +3,9 @@ from slackclient import SlackClient
 import time
 import os
 import sys
+import random
+import re
+from pack import bestPack
 
 
 def format_list(query, header, format, params=()):
@@ -50,6 +53,33 @@ def print_last_game(rel=1):
                        '%d. %20s%7d%6d%7d%6.02f%6d',
                        (rel-1,))
 
+
+def make_teams(command):
+    excludes = re.search('exclude (([a-z0-9]+,*\\s*)+)', command)
+    if excludes:
+        excludes = re.split('[,\\s]+', excludes.group(1))
+    else:
+        excludes = []
+
+    c = conn.cursor()
+    # TODO: sql injection :(
+    nicks = c.execute('select name, score from rankme where name not in (' + ', '.join(['"%s"' % e for e in excludes]) + ')').fetchall()
+    candidates = bestPack(nicks)
+    candidates = [(teams, d) for (teams, d) in candidates if d < len(nicks) * 40]
+    if len(candidates) == 0:
+        candidates = [candidates[0]]
+
+    ((t1, t2), d) = random.choice(candidates)
+    sides = ['Terrorists', 'Counter Terrorists']
+    side1 = random.choice(sides)
+    side2 = [s for s in sides if s != side1][0]
+
+    def printTeam(side, team):
+        return '*%s*:\n\n%s\n\n' % (side, '\n'.join(['* ' + n for n in team]))
+
+    return printTeam(side1, t1) + '\n' + printTeam(side2, t2) + '\n\nTeam difference: ' + str(d)
+
+
 # constants
 BOT_ID = os.environ.get("BOT_ID")
 AT_BOT = "<@" + BOT_ID + ">"
@@ -69,6 +99,9 @@ def handle_command(command, channel):
         except ValueError:
             rel = 1
         response = '```\n' + print_last_game(rel) + '```\n:c4:'
+    elif command.startswith('team'):
+        response = make_teams(command)
+
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
