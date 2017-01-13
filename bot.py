@@ -133,7 +133,7 @@ def check_active():
     score = c.execute('select sum(score) from rankme').fetchone()[0]
     now = time.time()
 
-    print 'Score is %d; last score is %d at % .0f' % (score, last_score if not last_score is None else -1, now)
+    # print 'Score is %d; last score is %d at % .0f' % (score, last_score if not last_score is None else -1, now)
 
     if not last_score is None and score != last_score:
         if not is_active:
@@ -175,7 +175,7 @@ def check_active():
             is_active = False
             print 'The game has ended'
             slack_client.api_call("chat.postMessage", channel=CHANNEL,
-                                  text='Game over man! Game over!\n\n```' + print_last_game() + '```\nhttp://giphy.com/gifs/arnold-schwarzenegger-windows-cs-CFjw7eSxjJL8I', as_user=True)
+                                  text='Game over man! Game over!\n\n```' + print_last_game() + '```\n', as_user=True)
             c = conn.cursor()
             last_game_id = c.execute('select max(id) from game').fetchone()[0]
             c.execute('update game set end_time=? where id=?', (now, last_game_id))
