@@ -6,6 +6,7 @@ import sys
 import random
 import re
 from pack import bestPack
+import traceback
 
 
 def format_list(query, header, format, params=()):
@@ -208,5 +209,6 @@ if __name__ == "__main__":
             else:
                 print("Connection failed. Invalid Slack token or bot ID?")
         except Exception, e:
-            print 'Unexpected error; sleeping one minute', e
+            print 'Unexpected error; sleeping one minute.'
+            print traceback.format_exc()
             time.sleep(60)
