@@ -65,7 +65,7 @@ def make_teams(command):
     # TODO: sql injection :(
     nicks = c.execute('select name, score from rankme where name not in (' + ', '.join(['"%s"' % e for e in excludes]) + ')').fetchall()
     candidates = bestPack(nicks)
-    candidates = [(teams, d) for (teams, d) in candidates if d < len(nicks) * 40]
+    candidates = [(teams, d) for (teams, d) in candidates if d < len(nicks) * 20]
     if len(candidates) == 0:
         candidates = [candidates[0]]
 
