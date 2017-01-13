@@ -28,7 +28,7 @@ def print_score():
 def print_headshots():
     return format_list('select name, (cast(headshots as float) / kills * 100) as percentage, cast(headshots as float) / (rounds_tr + rounds_ct) as spr, headshots from rankme order by percentage desc',
                        '%23s%6s%8s%6s' % ('Nick', '%', 'HShot/r', 'Total'),
-                       '%d. %20s%6.0f%8.02f%6d')
+                       '%d. %20s%6.01f%8.02f%6d')
 
 
 def print_last_game(rel=1):
