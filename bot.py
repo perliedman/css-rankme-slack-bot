@@ -57,13 +57,13 @@ def print_last_game(rel=1):
 def make_teams(command):
     excludes = re.search('exclude (([a-z0-9]+,*\\s*)+)', command)
     if excludes:
-        excludes = re.split('[,\\s]+', excludes.group(1))
+        excludes = re.split(',\\s+', excludes.group(1))
     else:
         excludes = []
 
     c = conn.cursor()
     # TODO: sql injection :(
-    nicks = c.execute('select name, score from rankme where name not in (' + ', '.join(['"%s"' % e for e in excludes]) + ')').fetchall()
+    nicks = c.execute('select name, score from rankme where name not in (' + ', '.join(['"%s"' % e.strip() for e in excludes]) + ')').fetchall()
     candidates = bestPack(nicks)
     candidates = [(teams, d) for (teams, d) in candidates if d < len(nicks) * 20]
     if len(candidates) == 0:
