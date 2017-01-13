@@ -66,10 +66,10 @@ def make_teams(command):
     # TODO: sql injection :(
     sql = 'select name, score from rankme where name not in (' + ', '.join(['"%s"' % e.strip() for e in excludes]) + ')'
     nicks = c.execute(sql).fetchall()
-    candidates = bestPack(nicks)
-    candidates = [(teams, d) for (teams, d) in candidates if d < len(nicks) * 20]
+    unfiltered_candidates = bestPack(nicks)
+    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 20]
     if len(candidates) == 0:
-        candidates = [candidates[0]]
+        candidates = [unfiltered_candidates[0]]
 
     ((t1, t2), d) = random.choice(candidates)
     sides = ['Terrorists', 'Counter Terrorists']
