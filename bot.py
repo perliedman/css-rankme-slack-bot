@@ -27,7 +27,7 @@ def ranking(command, connection):
             name, (cast(score as float) - 1000) / (rounds_tr + rounds_ct) as spr,
             score, cast(kills as float)/deaths 
         from rankme 
-        order by spr desc""",
+        order by score desc""",
                               '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
                               '%2d.%20s%8.02f%6d%6.02f')
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
