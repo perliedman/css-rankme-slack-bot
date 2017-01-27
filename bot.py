@@ -170,7 +170,6 @@ class Bot(object):
             raise Exception('Connection failed. Invalid Slack token or bot ID?')
 
     def _handle_command(self, command, channel):
-
         response = None
         for (command_prefix, handler) in HANDLERS.items():
             if command.startswith(command_prefix):
@@ -187,13 +186,14 @@ class Bot(object):
 if __name__ == "__main__":
     # constants
     BOT_ID = os.environ.get("BOT_ID")
+    BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
     AT_BOT = "<@" + BOT_ID + ">"
     CHANNEL = '#lanparty'
     READ_WEBSOCKET_DELAY = 1  # 1 second delay between reading from firehose
 
     while True:
         try:
-            Bot(os.environ.get('SLACK_BOT_TOKEN'), sys.argv[1]).run()
+            Bot(BOT_TOKEN, sys.argv[1]).run()
         except Exception:
             print 'Unexpected error; sleeping one minute.'
             print traceback.format_exc()
