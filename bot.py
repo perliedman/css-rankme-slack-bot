@@ -149,7 +149,7 @@ class Bot(object):
     def __init__(self, bot_token, db_path):
         self._slack_client = SlackClient(bot_token)
         self._db_connection = sqlite3.connect(db_path)
-        self._game_tracker = GameTracker(self._db_connection)
+        self._game_tracker = SlackGameTracker(self._slack_client, self._db_connection)
 
     def run(self):
         if self._slack_client.rtm_connect():
