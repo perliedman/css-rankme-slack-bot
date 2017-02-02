@@ -78,7 +78,7 @@ def last_game(command, connection):
 
 
 def make_teams(command, connection):
-    excludes = re.search('exclude (([a-z0-9_ \\\']+,*\\s*)+)', command)
+    excludes = re.search('exclude (([\\.a-z0-9_ \\\']+,*\\s*)+)', command)
     if excludes:
         excludes = re.split(',\\s+', excludes.group(1))
     else:
