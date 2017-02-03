@@ -162,8 +162,8 @@ class SlackGameTracker(GameTracker):
     def on_game_ended(self):
         print 'The game has ended'
         self._slack_client.api_call("chat.postMessage", channel=CHANNEL,
-                                    text='Game over man! Game over!\n\n```' +
-                                    last_game('', self._connection) + '```\n',
+                                    text='Game over man! Game over!\n\n' +
+                                    last_game('', self._connection) + '\n',
                                     as_user=True)
 
 HANDLERS = {
