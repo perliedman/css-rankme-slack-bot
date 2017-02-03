@@ -21,7 +21,7 @@ def format_list(connection, query, header, format_str, params=()):
     return '\n'.join(lines)
 
 
-def ranking(command, connection):
+def ranking(_, connection):
     score_table = format_list(connection, """
         select
             name, (cast(score as float) - 1000) / (rounds_tr + rounds_ct) as spr,
@@ -33,7 +33,7 @@ def ranking(command, connection):
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
 
 
-def headshots(command, connection):
+def headshots(_, connection):
     headshots_table = format_list(connection, """
         select
             name, (cast(headshots as float) / kills * 100) as percentage, 
@@ -78,17 +78,16 @@ def last_game(command, connection):
 
 
 def make_teams(command, connection):
-    excludes = re.search('exclude (([\\.a-z0-9_ \\\']+,*\\s*)+)', command)
+    excludes = re.search('exclude (([^,]+,*\\s*)+)', command)
     if excludes:
         excludes = re.split(',\\s+', excludes.group(1))
     else:
         excludes = []
 
-    c = connection.cursor()
-    # TODO: sql injection :(
+    cursor = connection.cursor()
     sql = 'select name, score from rankme where name not in (' + \
-        ', '.join(['"%s"' % e.strip() for e in excludes]) + ')'
-    nicks = c.execute(sql).fetchall()
+         ','.join('?'*len(excludes)) + ')'
+    nicks = cursor.execute(sql, excludes).fetchall()
     unfiltered_candidates = bestPack(nicks)
     candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 20]
     if len(candidates) == 0:
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     while True:
         try:
             Bot(BOT_TOKEN, sys.argv[1]).run()
-        except Exception:
+        except:
             print 'Unexpected error; sleeping one minute.'
             print traceback.format_exc()
             time.sleep(60)
