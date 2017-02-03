@@ -73,9 +73,9 @@ def last_game(command, connection):
                             pg.game_id=(select id from game order by id desc limit 100 offset ?)
                             and rounds > 0
                         order by score desc""",
-                        '%23s%7s%6s%7s%6s%4s%6s' % \
+                        '%23s%7s%6s%7s%6s%5s%6s' % \
                         ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Hit%', 'Score'),
-                        '%d. %20s%7d%6d%7d%6.02f%4.0f%6d',
+                        '%d. %20s%7d%6d%7d%6.02f%5.0f%6d',
                         (rel-1,))
 
     return '```\n' + table + '```\n:c4:'
