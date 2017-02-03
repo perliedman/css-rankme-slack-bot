@@ -81,18 +81,18 @@ def make_teams(command, connection):
     excludes = re.search('exclude (([^,]+,*\\s*)+)', command)
     includes = re.search('include (([^,]+,*\\s*)+)', command)
     if excludes:
-        excludes = re.split(',\\s+', excludes.group(1))
+        params = re.split(',\\s+', excludes.group(1))
         sql = 'select name, score from rankme where name not in (' + \
-             ','.join('?'*len(excludes)) + ')'
+             ','.join('?'*len(params)) + ')'
     elif includes:
-        includes = re.split(',\\s+', includes.group(1))
+        params = re.split(',\\s+', includes.group(1))
         sql = 'select name, score from rankme where name in (' + \
-             ','.join('?'*len(includes)) + ')'
+             ','.join('?'*len(params)) + ')'
     else:
         sql = 'select name, score from rankme'
 
     cursor = connection.cursor()
-    nicks = cursor.execute(sql, excludes).fetchall()
+    nicks = cursor.execute(sql, params).fetchall()
     unfiltered_candidates = bestPack(nicks)
     candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 20]
     if len(candidates) == 0:
