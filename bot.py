@@ -78,10 +78,10 @@ def last_game(command, connection):
 
 
 def make_teams(command, connection):
-    def parse_guests(guests):
+    def parse_guests(guests_str):
         guests = []
-        for guest in re.split(',\\s*', includes.group(2)):
-            match = re.split('(\\S+)\\s*(\\d*)', guest)
+        for guest in re.split(',\\s*', guests_str):
+            match = re.match('(\\S+)\\s*(\\d*)', guest)
             if match:
                 try:
                     score = int(match.group(2))
@@ -94,9 +94,9 @@ def make_teams(command, connection):
 
         return guests
 
-    excludes = re.search('exclude(s|) (([^,]+,*\\s*)+)', command)
-    includes = re.search('include(s|) (([^,]+,*\\s*)+)', command)
-    guests = re.search('guest(s|) (([^,]+,*\\s*)+)', command)
+    excludes = re.search('exclude(s|) (([^,;]+,*\\s*)+)', command)
+    includes = re.search('include(s|) (([^,;]+,*\\s*)+)', command)
+    guests = re.search('guest(s|) (([^,;]+,*\\s*)+)', command)
     if excludes:
         params = re.split(',\\s*', excludes.group(2))
         sql = 'select name, score from rankme where name not in (' + \
@@ -113,7 +113,9 @@ def make_teams(command, connection):
     nicks = cursor.execute(sql, params).fetchall()
 
     if guests:
-        nicks = nicks.concat(parse_guests(guests))
+        guests = parse_guests(guests.group(2))
+        print guests
+        nicks = nicks + guests
 
     unfiltered_candidates = bestPack(nicks)
     candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 20]
