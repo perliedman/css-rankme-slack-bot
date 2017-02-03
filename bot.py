@@ -90,6 +90,7 @@ def make_teams(command, connection):
              ','.join('?'*len(params)) + ')'
     else:
         sql = 'select name, score from rankme'
+        params = []
 
     cursor = connection.cursor()
     nicks = cursor.execute(sql, params).fetchall()
