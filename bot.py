@@ -62,6 +62,10 @@ def last_game(command, connection):
                                 when lg.deaths-pg.deaths > 0 then (cast(lg.kills as float)-pg.kills)/(lg.deaths - pg.deaths)
                                 else 0
                             end as kdr,
+                            case
+                                when lg.hits-pg.hits > 0 then (cast(lg.hits as float)-pg.hits)/(lg.shots - pg.shots)*100
+                                else 0
+                            end as hits,
                             lg.score-pg.score as score
                         from rankme as lg
                         inner join game_stats as pg on lg.steam=pg.steam
@@ -69,9 +73,9 @@ def last_game(command, connection):
                             pg.game_id=(select id from game order by id desc limit 100 offset ?)
                             and rounds > 0
                         order by score desc""",
-                        '%23s%7s%6s%7s%6s%6s' % \
-                        ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Score'),
-                        '%d. %20s%7d%6d%7d%6.02f%6d',
+                        '%23s%7s%6s%7s%6s%4s%6s' % \
+                        ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Hit%', 'Score'),
+                        '%d. %20s%7d%6d%7d%6.02f%4.0f%6d',
                         (rel-1,))
 
     return '```\n' + table + '```\n:c4:'
