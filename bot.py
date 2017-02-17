@@ -5,10 +5,12 @@ import sys
 import random
 import re
 import traceback
+from collections import defaultdict
 
 from slackclient import SlackClient
 from pack import bestPack
 from game_tracker import GameTracker
+import linegraph
 
 def format_list(connection, query, header, format_str, params=()):
     cursor = connection.cursor()
@@ -96,6 +98,20 @@ def last_game(command, connection):
 
     return '```\n' + table + '```\n:c4:'
 
+
+def history(_, connection):
+    cursor = connection.cursor()
+    game_scores = cursor.execute("""
+        select rankme.name, IFNULL(game_stats.score, 1000)
+        from rankme, game
+        left outer join game_stats on rankme.steam=game_stats.steam and game.id=game_stats.game_id
+        order by rankme.name, game_id
+        """).fetchall()
+
+    games = defaultdict(game_scores)
+    series = games.items()
+
+    return linegraph.get_chart_url(series)
 
 def make_teams(command, connection):
     def parse_guests(guests_str):
@@ -205,7 +221,8 @@ HANDLERS = {
     'ranking': ranking,
     'headshots': headshots,
     'last': last_game,
-    'team': make_teams
+    'team': make_teams,
+    'history': history
 }
 
 class Bot(object):
