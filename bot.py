@@ -163,7 +163,8 @@ def cleanup(slack_client, connection):
         cursor.execute('delete from game_stats where steam=?', ('STEAM_ID_STOP_IGNORING_RETVALS',))
 
         slack_client.api_call('chat.postMessage', channel=CHANNEL,
-                              text='I cleaned up these FAKE USERS: ' + ', '.join(invalids) +
+                              text='I cleaned up these FAKE USERS: ' +
+                              ', '.join([i[0] for i in invalids]) +
                               '. SAD!',
                               as_user=True)
 
