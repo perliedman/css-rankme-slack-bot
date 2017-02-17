@@ -113,7 +113,13 @@ def history(_, connection):
         games[name].append(score)
     series = games.items()
 
-    return linegraph.get_chart_url(series)
+    return [
+        {
+            'title': 'Scores',
+            'image_url': linegraph.get_chart_url(series)
+        }
+    ]
+    
 
 def make_teams(command, connection):
     def parse_guests(guests_str):
@@ -266,8 +272,12 @@ class Bot(object):
         if not response:
             response = 'Huh? Try one of ' + ', '.join(['*' + cmd + '*' for cmd in HANDLERS.keys()])
 
-        self._slack_client.api_call("chat.postMessage", channel=channel,
-                                    text=response, as_user=True)
+        if isinstance(response, basestring):
+            self._slack_client.api_call("chat.postMessage", channel=channel,
+                                        text=response, as_user=True)
+        else:
+            self._slack_client.api_call("chat.postMessage", channel=channel,
+                                        attachments=response, as_user=True)
 
 
 if __name__ == "__main__":
