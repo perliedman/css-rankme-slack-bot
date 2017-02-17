@@ -203,10 +203,14 @@ class Bot(object):
 
     def _handle_command(self, command, channel):
         response = None
-        for (command_prefix, handler) in HANDLERS.items():
-            if command.startswith(command_prefix):
-                response = handler(command, self._db_connection)
-                break
+        try:
+            for (command_prefix, handler) in HANDLERS.items():
+                if command.startswith(command_prefix):
+                    response = handler(command, self._db_connection)
+                    break
+        except Exception, e:
+            print traceback.format_exc()
+            response = 'Uhm, that did not go as planned: ' + str(e)
 
         if not response:
             response = 'Huh? Try one of ' + ', '.join(['*' + cmd + '*' for cmd in HANDLERS.keys()])
