@@ -153,6 +153,20 @@ def parse_slack_output(slack_rtm_output):
                     output['channel']
     return None, None
 
+def cleanup(slack_client, connection):
+    cursor = connection.cursor()
+    invalids = cursor.execute('select name from rankme where steam=?',
+                              ('STEAM_ID_STOP_IGNORING_RETVALS',)).fetchall()
+
+    if len(invalids):
+        cursor.execute('delete from rankme where steam=?', ('STEAM_ID_STOP_IGNORING_RETVALS',))
+        cursor.execute('delete from game_stats where steam=?', ('STEAM_ID_STOP_IGNORING_RETVALS',))
+
+        slack_client.api_call('chat.postMessage', channel=CHANNEL,
+                              text='I cleaned up these FAKE USERS: ' + ', '.join(invalids) +
+                              '. SAD!',
+                              as_user=True)
+
 class SlackGameTracker(GameTracker):
     def __init__(self, slack_client, db_connection):
         GameTracker.__init__(self, db_connection)
@@ -190,6 +204,7 @@ class Bot(object):
             while True:
                 if count % 10 == 0:
                     self._game_tracker.check_active()
+                    cleanup(self._slack_client, self._db_connection)
 
                 count += 1
 
