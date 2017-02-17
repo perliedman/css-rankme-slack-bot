@@ -108,7 +108,9 @@ def history(_, connection):
         order by rankme.name, game_id
         """).fetchall()
 
-    games = defaultdict(game_scores)
+    games = defaultdict(list)
+    for name, score in game_scores:
+        games[name].append(score)
     series = games.items()
 
     return linegraph.get_chart_url(series)
