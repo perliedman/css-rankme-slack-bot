@@ -4,7 +4,7 @@ colors = ['7cb5ec', '434348', '90ed7d', 'f7a35c', '8085e9',
    'f15c80', 'e4d354', '2b908f', 'f45b5b', '91e8e1']
 
 def get_chart_url(series):
-    chart = SimpleLineChart(640, 400)
+    chart = SimpleLineChart(400, 200)
 
     chart.set_legend([name for (name, _) in series])
     chart.set_colours_within_series(colors[0:len(series)])

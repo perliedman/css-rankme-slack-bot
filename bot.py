@@ -113,13 +113,18 @@ def history(_, connection):
         games[name].append(score)
     series = games.items()
 
+    graph_url = linegraph.get_chart_url(series)
+
     return [
         {
-            'title': 'Scores',
-            'image_url': linegraph.get_chart_url(series)
+            "fallback": "Score History - %s" % graph_url,
+            "title": "Score History",
+            "title_link": graph_url,
+            "text": "Score development over time",
+            "image_url": graph_url
         }
     ]
-    
+
 
 def make_teams(command, connection):
     def parse_guests(guests_str):
@@ -277,7 +282,7 @@ class Bot(object):
                                         text=response, as_user=True)
         else:
             self._slack_client.api_call("chat.postMessage", channel=channel,
-                                        attachments=response, as_user=True)
+                                        attachments=response)
 
 
 if __name__ == "__main__":
