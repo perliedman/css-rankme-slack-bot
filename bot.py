@@ -282,7 +282,7 @@ class Bot(object):
                                         text=response, as_user=True)
         else:
             self._slack_client.api_call("chat.postMessage", channel=channel,
-                                        attachments=response)
+                                        attachments=response, as_user=True)
 
 
 if __name__ == "__main__":
