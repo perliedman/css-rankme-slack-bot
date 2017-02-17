@@ -24,8 +24,16 @@ def format_list(connection, query, header, format_str, params=()):
 def ranking(_, connection):
     score_table = format_list(connection, """
         select
-            name, (cast(score as float) - 1000) / (rounds_tr + rounds_ct) as spr,
-            score, cast(kills as float)/deaths 
+            name, 
+            case
+                when rounds_tr + rounds_ct > 0 then (cast(score as float) - 1000) / (rounds_tr + rounds_ct)
+                else 0 
+            end as spr,
+            score, 
+            case
+                when deaths > 0 then cast(kills as float)/deaths 
+                else 0
+            end as kdr
         from rankme 
         order by score desc""",
                               '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
@@ -36,8 +44,16 @@ def ranking(_, connection):
 def headshots(_, connection):
     headshots_table = format_list(connection, """
         select
-            name, (cast(headshots as float) / kills * 100) as percentage, 
-            cast(headshots as float) / (rounds_tr + rounds_ct) as spr, headshots 
+            name, 
+            case
+                when kills > 0 then (cast(headshots as float) / kills * 100)
+                else 0
+            end as percentage, 
+            case
+                when rounds_tr + rounds_ct > 0 then cast(headshots as float) / (rounds_tr + rounds_ct)
+                else 0
+            end as spr,
+            headshots 
         from rankme 
         order by percentage desc""",
                                   '%23s%6s%8s%6s' % ('Nick', '%', 'HShot/r', 'Total'),
