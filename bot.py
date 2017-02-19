@@ -5,12 +5,14 @@ import sys
 import random
 import re
 import traceback
+import json
 from collections import defaultdict
 
 from slackclient import SlackClient
 from pack import bestPack
 from game_tracker import GameTracker
 import linegraph
+from skill import get_skill_ranking
 
 def format_list(connection, query, header, format_str, params=()):
     cursor = connection.cursor()
@@ -23,7 +25,7 @@ def format_list(connection, query, header, format_str, params=()):
     return '\n'.join(lines)
 
 
-def ranking(_, connection):
+def ranking(_, connection, **kwargs):
     score_table = format_list(connection, """
         select
             name, 
@@ -43,7 +45,7 @@ def ranking(_, connection):
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
 
 
-def headshots(_, connection):
+def headshots(_, connection, **kwargs):
     headshots_table = format_list(connection, """
         select
             name, 
@@ -63,7 +65,7 @@ def headshots(_, connection):
     return '```\n' + headshots_table + '```\n:disappointed_relieved::gun:'
 
 
-def last_game(command, connection):
+def last_game(command, connection, **kwargs):
     parts = command.split(' ')
     try:
         rel = int(parts[-1])
@@ -99,7 +101,7 @@ def last_game(command, connection):
     return '```\n' + table + '```\n:c4:'
 
 
-def history(_, connection):
+def history(_, connection, **kwargs):
     cursor = connection.cursor()
     game_scores = cursor.execute("""
         select rankme.name, IFNULL(game_stats.score, 1000)
@@ -124,6 +126,21 @@ def history(_, connection):
             "image_url": graph_url
         }
     ]
+
+
+def skill(_, connection, log_db_connection):
+    cursor = log_db_connection.cursor()
+    rounds = cursor.execute('select win_team, lose_team from rounds order by id').fetchall()
+    rounds = [(json.loads(win_team.decode('utf-8')), json.loads(lose_team.decode('utf-8'))) for (win_team, lose_team) in rounds]
+
+    skills = get_skill_ranking(rounds)
+    players = dict(cursor.execute('select steam_id, name from players').fetchall())
+    leaderboard = zip(range(1, len(skills) + 1), skills)
+
+    return '```' + \
+        '%23s%11s' % ('Nick', 'Skill') + '\n' + \
+        '\n'.join(['%2d.%20s%5.1f (%3.0f)' % (i, players[steam_id], rating.mu, rating.sigma) for (i, (steam_id, rating)) in leaderboard]) + \
+        '```'
 
 
 def make_teams(command, connection):
@@ -235,18 +252,19 @@ HANDLERS = {
     'headshots': headshots,
     'last': last_game,
     'team': make_teams,
-    'history': history
+    'history': history,
+    'skill': skill
 }
 
 class Bot(object):
-    def __init__(self, bot_token, db_path):
+    def __init__(self, bot_token, db_path, log_db_path):
         self._slack_client = SlackClient(bot_token)
         self._db_connection = sqlite3.connect(db_path)
+        self._log_db_connection = sqlite3.connect(log_db_path)
         self._game_tracker = SlackGameTracker(self._slack_client, self._db_connection)
 
     def run(self):
         if self._slack_client.rtm_connect():
-            print 'Bot connected and running.'
             count = 0
             while True:
                 if count % 10 == 0:
@@ -257,7 +275,6 @@ class Bot(object):
 
                 command, channel = parse_slack_output(self._slack_client.rtm_read())
                 if command and channel:
-                    print 'Received "%s" on channel %s' % (command, channel)
                     self._handle_command(command, channel)
                 time.sleep(READ_WEBSOCKET_DELAY)
         else:
@@ -268,7 +285,7 @@ class Bot(object):
         try:
             for (command_prefix, handler) in HANDLERS.items():
                 if command.startswith(command_prefix):
-                    response = handler(command, self._db_connection)
+                    response = handler(command, self._db_connection, log_db_connection=self._log_db_connection)
                     break
         except Exception, e:
             print traceback.format_exc()
@@ -295,7 +312,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            Bot(BOT_TOKEN, sys.argv[1]).run()
+            Bot(BOT_TOKEN, sys.argv[1], sys.argv[2]).run()
         except:
             print 'Unexpected error; sleeping one minute.'
             print traceback.format_exc()
