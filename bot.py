@@ -128,9 +128,13 @@ def history(_, connection, **kwargs):
     ]
 
 
-def skill(_, connection, log_db_connection):
+def skill(_, _, log_db_connection):
     cursor = log_db_connection.cursor()
-    rounds = cursor.execute('select win_team, lose_team from rounds order by id').fetchall()
+    rounds = cursor.execute("""
+        select win_team, lose_team 
+        from rounds 
+        where win_team is not null and lose_team is not null 
+        order by id""").fetchall()
     rounds = [(json.loads(win_team.decode('utf-8')), json.loads(lose_team.decode('utf-8'))) for (win_team, lose_team) in rounds]
 
     skills = get_skill_ranking(rounds)
