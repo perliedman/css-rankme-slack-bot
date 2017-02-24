@@ -142,8 +142,8 @@ def skill(_, __, log_db_connection):
     leaderboard = zip(range(1, len(skills) + 1), skills)
 
     return '```' + \
-        '%23s%11s' % ('Nick', 'Skill') + '\n' + \
-        '\n'.join(['%2d.%20s%5.1f (%3.0f)' % (i, players[steam_id], rating.mu, rating.sigma) for (i, (steam_id, rating)) in leaderboard]) + \
+        '%23s%6s' % ('Nick', 'Skill') + '\n' + \
+        '\n'.join(['%2d.%20s%6.0f' % (i, players[steam_id], rating.mu - 3 * rating.sigma) for (i, (steam_id, rating)) in leaderboard]) + \
         '```'
 
 
