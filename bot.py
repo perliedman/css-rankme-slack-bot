@@ -147,7 +147,7 @@ def skill(_, __, log_db_connection):
         '```'
 
 
-def make_teams(command, connection):
+def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
         guests = []
         for guest in re.split(',\\s*', guests_str):
