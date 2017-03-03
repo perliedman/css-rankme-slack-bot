@@ -166,8 +166,8 @@ def killers(_, __, log_db_connection):
         """).fetchall()
 
     return '```' + \
-        '%15s%12s%6s' % ('Killer', 'Killed', 'Kills') + '\n' + \
-        '\n'.join(['%2d.%12s%12s%4d' % (i, killer, killed, kills) for (i, (killer, ___, killed, kills)) in zip(range(1, len(killers)), killers)]) + \
+        '%16s%13s%6s' % ('Killer', 'Killed', 'Kills') + '\n' + \
+        '\n'.join(['%2d.%13s%13s%6d' % (i, killer, killed, kills) for (i, (killer, ___, killed, kills)) in zip(range(1, len(killers)), killers)]) + \
         '```'
 
 
