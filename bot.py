@@ -146,6 +146,30 @@ def skill(_, __, log_db_connection):
         '\n'.join(['%2d.%20s%6.0f' % (i, players[steam_id], rating.mu - 3 * rating.sigma) for (i, (steam_id, rating)) in leaderboard]) + \
         '```'
 
+def killers(_, __, log_db_connection):
+    cursor = log_db_connection.cursor()
+    killers = cursor.execute("""
+        select killer.name, (
+            select killed.steam_id
+            from players as killed
+            inner join events on subject_id=killed.steam_id
+            where events.type='player_death' and indirect_id=killer.steam_id
+            group by killed.name
+            order by count(events.id) desc
+            limit 1
+           ) as killed_id, killed.name, count(events.id) as kills
+        from players as killer
+        inner join events on type='player_death' and subject_id=killed_id and indirect_id=killer.steam_id
+        inner join players as killed on killed.steam_id=killed_id
+        group by killer.name, killed.name
+        order by kills desc
+        """)
+
+    return '```' + \
+        '%15s%12s%6s' % ('Killer', 'Killed', 'Kills') + '\n' + \
+        '\n'.join(['%2d.%12s%12s%4d' % (i, killer, killed, kills) for (i, (killer, killed, kills)) in zip(range(1, len(killers)), killers)]) + \
+        '```'
+
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
@@ -257,7 +281,8 @@ HANDLERS = {
     'last': last_game,
     'team': make_teams,
     'history': history,
-    'skill': skill
+    'skill': skill,
+    'killers': killers
 }
 
 class Bot(object):
