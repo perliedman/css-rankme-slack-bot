@@ -163,7 +163,7 @@ def killers(_, __, log_db_connection):
         inner join players as killed on killed.steam_id=killed_id
         group by killer.name, killed.name
         order by kills desc
-        """)
+        """).fetchall()
 
     return '```' + \
         '%15s%12s%6s' % ('Killer', 'Killed', 'Kills') + '\n' + \
