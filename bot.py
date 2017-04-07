@@ -192,12 +192,12 @@ def make_teams(command, connection, **kwargs):
     includes = re.search('include(s|) (([^,;]+,*\\s*)+)', command)
     guests = re.search('guest(s|) (([^,;]+,*\\s*)+)', command)
     if excludes:
-        params = re.split(',\\s*', excludes.group(2))
-        sql = 'select name, score from rankme where name not in (' + \
+        params = [s.lower() for s in re.split(',\\s*', excludes.group(2))]
+        sql = 'select name, score from rankme where lower(name) not in (' + \
              ','.join('?'*len(params)) + ')'
     elif includes:
-        params = re.split(',\\s*', includes.group(2))
-        sql = 'select name, score from rankme where name in (' + \
+        params = [s.lower() for s in re.split(',\\s*', includes.group(2))]
+        sql = 'select name, score from rankme where lower(name) in (' + \
              ','.join('?'*len(params)) + ')'
     else:
         sql = 'select name, score from rankme'
