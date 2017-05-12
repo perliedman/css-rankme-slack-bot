@@ -183,10 +183,10 @@ def bomb_defuses(command, __, log_db_connection):
 def _events(command, __, log_db_connection, event, event_col_name):
     args = command.split(' ')
 
-    start = args[0] if len(args) and args[0] is not '' > 0 else '2017-01-01'
-    end = args[1] if len(args) > 1 else '2100-01-01'
+    start = args[1] if len(args) > 1 and args[1] is not '' > 0 else '2017-01-01'
+    end = args[2] if len(args) > 2 else '2100-01-01'
 
-    table = format_list(log_db_connection, """
+    sql = """
         select 
             name,
             count(*)
@@ -197,7 +197,9 @@ def _events(command, __, log_db_connection, event, event_col_name):
         and date(time) between ? and ?
         group by name
         order by count(*) desc
-        """,
+        """
+
+    table = format_list(log_db_connection, sql,
             '%20s%12s' % ('Nick', event_col_name),
             '%d. %17s%12d', (event, start, end))
 
@@ -279,6 +281,6 @@ def make_teams(command, connection, **kwargs):
 if __name__ == "__main__":
     db_connection = sqlite3.connect('sample_db.sq3')
     log_db_connection = sqlite3.connect('sample-log.db.sq3')
-    command, arguments = sys.argv[1], ' '.join(sys.argv[2:])
+    command, arguments = sys.argv[1], ' '.join(sys.argv[1:])
 
     print locals()[command](arguments, db_connection, log_db_connection=log_db_connection)
