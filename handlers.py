@@ -168,29 +168,43 @@ def killers(_, __, log_db_connection):
         '\n'.join(['%2d.%13s%13s%6d' % (i, killer, killed, kills) for (i, (killer, ___, killed, kills)) in zip(range(1, len(killers)), killers)]) + \
         '```'
 
-def smokes(arguments, __, log_db_connection):
-    args = arguments.split(' ')
+def smokes(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'smokegrenade_detonate', 'No. Smokes')
+
+def hes(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'hegrenade_detonate', 'No. HEs')
+
+def flashbangs(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'flashbang_detonate', 'No. Flashs')
+
+def bomb_plants(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'bomb_planted', 'No. Plants')
+
+def bomb_defuses(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'bomb_defused', 'No. Defuses')
+
+def _events(command, __, log_db_connection, event, event_col_name):
+    args = command.split(' ')
 
     start = args[0] if len(args) and args[0] is not '' > 0 else '2017-01-01'
     end = args[1] if len(args) > 1 else '2100-01-01'
 
-    smokes_table = format_list(log_db_connection, """
+    table = format_list(log_db_connection, """
         select 
             name,
-            count(*),
-            0
+            count(*)
         from events as e
         inner join players on steam_id = subject_id
         where
-        type = 'smokegrenade_detonate'
+        type = '""" + event + """'
         and date(time) between '""" + start + """' and '""" + end + """'
         group by name
         order by count(*) desc;
         """,
-            '%23s%12s%12s' % ('Nick', 'No. Smokes', 'Per round'),
-            '%d. %20s%12d%12s')
+            '%20s%12s' % ('Nick', event_col_name),
+            '%d. %17s%12d')
 
-    return '```\n' + smokes_table + '```'
+    return '```\n' + table + '```'
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
