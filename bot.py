@@ -2,16 +2,10 @@ import sqlite3
 import time
 import os
 import sys
-import random
-import re
 import traceback
-import json
 
 from slackclient import SlackClient
-from pack import bestPack
 from game_tracker import GameTracker
-import linegraph
-from skill import get_skill_ranking
 import handlers
 
 def parse_slack_output(slack_rtm_output):
@@ -58,7 +52,7 @@ class SlackGameTracker(GameTracker):
         print 'The game has ended'
         self._slack_client.api_call("chat.postMessage", channel=CHANNEL,
                                     text='Game over man! Game over!\n\n' +
-                                    last_game('', self._connection) + '\n',
+                                    handlers.last_game('', self._connection) + '\n',
                                     as_user=True)
 
 HANDLERS = {
