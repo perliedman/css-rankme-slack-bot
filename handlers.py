@@ -56,7 +56,7 @@ def headshots(_, connection, **kwargs):
         from rankme 
         order by percentage desc""",
                                   '%23s%6s%8s%6s' % ('Nick', '%', 'HShot/r', 'Total'),
-                                  '%d. %20s%6.01f%8.02f%6d')
+                                  '%2d. %19s%6.01f%8.02f%6d')
     return '```\n' + headshots_table + '```\n:disappointed_relieved::gun:'
 
 
@@ -90,7 +90,7 @@ def last_game(command, connection, **kwargs):
                         order by score desc""",
                         '%23s%7s%6s%7s%6s%5s%6s' % \
                         ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Hit%', 'Score'),
-                        '%d. %20s%7d%6d%7d%6.02f%5.0f%6d',
+                        '%2d. %19s%7d%6d%7d%6.02f%5.0f%6d',
                         (rel-1,))
 
     return '```\n' + table + '```\n:c4:'
@@ -166,21 +166,21 @@ def killers(_, __, log_db_connection):
         '```'
 
 def smokes(command, __, log_db_connection):
-    return _events(command, __, log_db_connection, 'smokegrenade_detonate', 'No. Smokes')
+    return _events(command, __, log_db_connection, 'smokegrenade_detonate', 'No. Smokes', 'Smokes/round')
 
 def hes(command, __, log_db_connection):
-    return _events(command, __, log_db_connection, 'hegrenade_detonate', 'No. HEs')
+    return _events(command, __, log_db_connection, 'hegrenade_detonate', 'No. HEs', 'HEs/round')
 
 def flashbangs(command, __, log_db_connection):
-    return _events(command, __, log_db_connection, 'flashbang_detonate', 'No. Flashs')
+    return _events(command, __, log_db_connection, 'flashbang_detonate', 'No. Flashes', 'Flashes/round')
 
 def bomb_plants(command, __, log_db_connection):
-    return _events(command, __, log_db_connection, 'bomb_planted', 'No. Plants')
+    return _events(command, __, log_db_connection, 'bomb_planted', 'No. Plants', 'Plants/round')
 
 def bomb_defuses(command, __, log_db_connection):
-    return _events(command, __, log_db_connection, 'bomb_defused', 'No. Defuses')
+    return _events(command, __, log_db_connection, 'bomb_defused', 'No. Defuses', 'Defuses/round')
 
-def _events(command, __, log_db_connection, event, event_col_name):
+def _events(command, __, log_db_connection, event, event_col_name, events_per_round_col_name):
     args = command.split(' ')
 
     start = args[1] if len(args) > 1 and args[1] is not '' > 0 else '2017-01-01'
@@ -189,7 +189,8 @@ def _events(command, __, log_db_connection, event, event_col_name):
     sql = """
         select 
             name,
-            count(*)
+            count(*),
+            cast(count(*) as float) / (select count(*) from (select 1 from events where subject_id=players.steam_id group by subject_id, round_id))
         from events as e
         inner join players on steam_id = subject_id
         where
@@ -200,8 +201,8 @@ def _events(command, __, log_db_connection, event, event_col_name):
         """
 
     table = format_list(log_db_connection, sql,
-            '%20s%12s' % ('Nick', event_col_name),
-            '%d. %17s%12d', (event, start, end))
+            '%20s%12s%14s' % ('Nick', event_col_name, events_per_round_col_name),
+            '%2d. %16s%12d%14.2f', (event, start, end))
 
     return '```\n' + table + '\n```'
 
