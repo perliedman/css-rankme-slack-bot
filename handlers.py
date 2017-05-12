@@ -179,6 +179,15 @@ def bomb_plants(command, __, log_db_connection):
 def bomb_defuses(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'bomb_defused', 'No. Defuses', 'Defuses/round')
 
+def blinds(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'player_blind', 'No. Blinds', 'Blinds/round')
+
+def jumps(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'player_jump', 'No. Jumps', 'Jumps/round')
+
+def radios(command, __, log_db_connection):
+    return _events(command, __, log_db_connection, 'player_radio', 'No. Radios', 'Radios/round')
+
 def _events(command, __, log_db_connection, event, event_col_name, events_per_round_col_name):
     args = command.split(' ')
 
