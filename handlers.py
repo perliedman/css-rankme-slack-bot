@@ -189,14 +189,14 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
         select 
             name,
             count(*),
-            cast(count(*) as float) / (select count(*) from (select 1 from events where subject_id=players.steam_id group by subject_id, round_id))
+            cast(count(*) as float) / (select count(*) from (select 1 from events where subject_id=players.steam_id group by subject_id, round_id)) as epr
         from events as e
         inner join players on steam_id = subject_id
         where
         type = ?
         and date(time) between ? and ?
         group by name
-        order by count(*) desc
+        order by epr desc
         """
 
     table = format_list(log_db_connection, sql,
