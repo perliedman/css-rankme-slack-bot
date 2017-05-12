@@ -1,15 +1,11 @@
 import sqlite3
-import time
-import os
 import sys
 import random
 import re
-import traceback
 import json
 
 from collections import defaultdict
 from pack import bestPack
-from game_tracker import GameTracker
 import linegraph
 from skill import get_skill_ranking
 
@@ -196,15 +192,15 @@ def _events(command, __, log_db_connection, event, event_col_name):
         from events as e
         inner join players on steam_id = subject_id
         where
-        type = '""" + event + """'
-        and date(time) between '""" + start + """' and '""" + end + """'
+        type = ?
+        and date(time) between ? and ?
         group by name
-        order by count(*) desc;
+        order by count(*) desc
         """,
             '%20s%12s' % ('Nick', event_col_name),
-            '%d. %17s%12d')
+            '%d. %17s%12d', (event, start, end))
 
-    return '```\n' + table + '```'
+    return '```\n' + table + '\n```'
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
