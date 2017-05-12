@@ -68,7 +68,12 @@ HANDLERS = {
     'team': handlers.make_teams,
     'history': handlers.history,
     'skill': handlers.skill,
-    'killers': handlers.killers
+    'killers': handlers.killers,
+    'smokes': handlers.smokes,
+    'flashbangs': handlers.flashbangs,
+    'hes': handlers.hes,
+    'bombplants': handlers.bomb_plants,
+    'bombdefuses': handlers.bomb_defuses,
 }
 
 class Bot(object):
