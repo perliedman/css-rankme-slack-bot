@@ -68,6 +68,9 @@ HANDLERS = {
     'hes': handlers.hes,
     'bombplants': handlers.bomb_plants,
     'bombdefuses': handlers.bomb_defuses,
+    'blinds': handlers.blinds,
+    'jumps': handlers.jumps,
+    'radios': handlers.radios,
 }
 
 class Bot(object):
