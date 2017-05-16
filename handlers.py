@@ -199,7 +199,15 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
         select 
             name,
             count(*),
-            cast(count(*) as float) / (select count(*) from (select 1 from events where subject_id=players.steam_id group by subject_id, round_id)) as epr
+            cast(count(*) as float) / (
+                select count(*) from (
+                    select 
+                        1
+                    from events 
+                    where 
+                    subject_id=players.steam_id
+                    and date(time) between ? and ?
+                    group by subject_id, round_id)) as epr
         from events as e
         inner join players on steam_id = subject_id
         where
@@ -211,7 +219,7 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
 
     table = format_list(log_db_connection, sql,
             '%20s%12s%14s' % ('Nick', event_col_name, events_per_round_col_name),
-            '%2d. %16s%12d%14.2f', (event, start, end))
+            '%2d. %16s%12d%14.2f', (start, end, event, start, end))
 
     return '```\n' + table + '\n```'
 
