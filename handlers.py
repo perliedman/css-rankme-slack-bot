@@ -227,7 +227,7 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
 def weapons(command, _, log_db_connection):
     args = command.split(' ')
     try:
-        name = args[1:]
+        name = ' '.join(args[1:])
     except IndexError:
         raise HandlerInputException('you must supply a nickname: weapons <nick>')
 
