@@ -257,7 +257,7 @@ def weapons(command, _, log_db_connection):
 
     table = '\n'.join(lines)
 
-    print '```\n' + table + '```\n'
+    return '```\n' + table + '```\n'
 
 def clean_weapon_stats(weapon_stats_dict):
     remove = ['prop_physics_multiplayer', 'world']
@@ -265,7 +265,6 @@ def clean_weapon_stats(weapon_stats_dict):
     for to_remove in remove:
         if to_remove in weapon_stats_dict:
             del weapon_stats_dict[to_remove]
-
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):

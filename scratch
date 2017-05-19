@@ -1,0 +1,46 @@
+CREATE TABLE rounds (
+            id integer primary key autoincrement,
+            starttime datetime,
+            endtime datetime null,
+            win_team text null,
+            lose_team text null);
+CREATE TABLE players (
+            steam_id varchar(16) primary key,
+            name varchar(32));
+CREATE TABLE `events` (
+            id integer primary key autoincrement,
+            round_id integer references rounds,
+            time datetime,
+            type varchar(16),
+            data text,
+            subject_id varchar(16) null references players,
+            indirect_id varchar(16) null references players);
+
+item_pickup
+weapon_fire
+weapon_reload
+player_jump
+bomb_pickup
+bomb_beginplant
+bomb_planted
+player_hurt
+player_death
+bomb_begindefuse
+bomb_defused
+weapon_zoom
+bomb_dropped
+player_avenged_teammate
+player_blind
+flashbang_detonate
+hegrenade_detonate
+player_radio
+bomb_abortdefuse
+smokegrenade_detonate
+bomb_abortplant
+player_falldamage
+round_mvp
+break_prop
+bomb_exploded
+break_breakable
+player_decal
+weapon_fire_on_empty
