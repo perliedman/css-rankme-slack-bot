@@ -8,6 +8,7 @@ import traceback
 import json
 
 from collections import defaultdict
+from collections import Counter
 from pack import bestPack
 from game_tracker import GameTracker
 import linegraph
@@ -205,6 +206,23 @@ def _events(command, __, log_db_connection, event, event_col_name):
             '%d. %17s%12d')
 
     return '```\n' + table + '```'
+
+def weapons(command, _, log_db_connection):
+    cursor = log_db_connection.cursor()
+
+    kills = cursor.execute("""
+        select
+            data
+        from events
+        inner join players on steam_id = indirect_id
+        where
+            type = 'player_death'
+            and name = '""" + command + """';
+    """).fetchall()
+
+    weapons =  [json.loads(data[0].decode('utf-8'))['weapon'] for data in kills]
+
+    print dict(Counter(weapons))
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
