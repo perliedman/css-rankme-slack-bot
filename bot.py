@@ -7,6 +7,7 @@ import traceback
 from slackclient import SlackClient
 from game_tracker import GameTracker
 import handlers
+from custom_exceptions import HandlerInputException
 
 def parse_slack_output(slack_rtm_output):
     """
@@ -104,6 +105,8 @@ class Bot(object):
                 if command.startswith(command_prefix):
                     response = handler(command, self._db_connection, log_db_connection=self._log_db_connection)
                     break
+        except HandlerInputException e:
+            response = 'Sorry, but you missed something:' + str(e)
         except Exception, e:
             print traceback.format_exc()
             response = 'Uhm, that did not go as planned: ' + str(e)

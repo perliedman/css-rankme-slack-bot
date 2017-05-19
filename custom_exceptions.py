@@ -1,0 +1,3 @@
+
+class HandlerInputException(Exception):
+    pass

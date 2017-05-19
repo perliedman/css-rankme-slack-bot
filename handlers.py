@@ -9,6 +9,7 @@ from collections import Counter
 from pack import bestPack
 import linegraph
 from skill import get_skill_ranking
+from custom_exceptions import HandlerInputException
 
 def format_list(connection, query, header, format_str, params=()):
     cursor = connection.cursor()
@@ -224,6 +225,12 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
     return '```\n' + table + '\n```'
 
 def weapons(command, _, log_db_connection):
+    args = command.split(' ')
+    try:
+        name = args[1]
+    except IndexError:
+        raise HandlerInputException('you must supply a nickname: weapons <nick>')
+
     cursor = log_db_connection.cursor()
 
     kills = cursor.execute("""
@@ -233,12 +240,32 @@ def weapons(command, _, log_db_connection):
         inner join players on steam_id = indirect_id
         where
             type = 'player_death'
-            and name = '""" + command + """';
+            and name = '""" + name + """';
     """).fetchall()
 
-    weapons =  [json.loads(data[0].decode('utf-8'))['weapon'] for data in kills]
+    weapon_stats = [json.loads(data[0].decode('utf-8'))['weapon'] for data in kills]
+    weapon_stats_dict = dict(Counter(weapon_stats))
 
-    print dict(Counter(weapons))
+    clean_weapon_stats(weapon_stats_dict)
+
+    lines = ['%19s%8s' % ('Weapon', 'Kills')]
+
+    i = 1
+    for key, value in sorted(weapon_stats_dict.iteritems(), key=lambda (k, v): (v, k), reverse=True):
+        lines.append('%2s. %15s%8s' % (i, key, value))
+        i = i + 1
+
+    table = '\n'.join(lines)
+
+    print '```\n' + table + '```\n'
+
+def clean_weapon_stats(weapon_stats_dict):
+    remove = ['prop_physics_multiplayer', 'world']
+
+    for to_remove in remove:
+        if to_remove in weapon_stats_dict:
+            del weapon_stats_dict[to_remove]
+
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
