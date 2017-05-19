@@ -72,6 +72,7 @@ HANDLERS = {
     'blinds': handlers.blinds,
     'jumps': handlers.jumps,
     'radios': handlers.radios,
+    'weapons': handlers.weapons
 }
 
 class Bot(object):
