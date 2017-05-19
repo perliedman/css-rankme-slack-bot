@@ -105,7 +105,7 @@ class Bot(object):
                 if command.startswith(command_prefix):
                     response = handler(command, self._db_connection, log_db_connection=self._log_db_connection)
                     break
-        except HandlerInputException e:
+        except HandlerInputException, e:
             response = 'Sorry, but you missed something:' + str(e)
         except Exception, e:
             print traceback.format_exc()
