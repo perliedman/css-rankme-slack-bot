@@ -5,6 +5,7 @@ import sys
 import traceback
 
 from slackclient import SlackClient
+from simplegist import Simplegist
 from game_tracker import GameTracker
 import handlers
 from custom_exceptions import HandlerInputException
@@ -39,6 +40,31 @@ def cleanup(slack_client, connection):
                               '. SAD!',
                               as_user=True)
 
+def write_rank_to_gist(_, connection, **kwargs):
+    api_token = os.environ.get('GITHUB_API_TOKEN')
+    gist_username = os.environ.get('GIST_USERNAME')
+    gist_id = os.environ.get('GIST_ID')
+
+    if not api_token or not gist_username or not gist_id:
+        return
+
+    cursor = connection.cursor()
+    rows = cursor.execute("""
+        select
+            name,
+            case
+                when deaths > 0 then cast(kills as float)/deaths 
+                else 0
+            end as kdr,
+            score
+        from rankme""")
+
+    text = '\n'.join(['%s\t%.2f\t%d' % r for r in rows])
+
+    ghgist = Simplegist(username=gist_username, api_token=api_token)
+    ghgist.profile().edit(id=gist_id, content=text)
+
+
 class SlackGameTracker(GameTracker):
     def __init__(self, slack_client, db_connection):
         GameTracker.__init__(self, db_connection)
@@ -56,6 +82,12 @@ class SlackGameTracker(GameTracker):
                                     handlers.last_game('', self._connection) + '\n',
                                     as_user=True)
 
+        try:
+            write_rank_to_gist(None, self._connection)
+        except Exception, e:
+            print 'Unexpected error updating gist.'
+            print traceback.format_exc()
+
 HANDLERS = {
     'ranking': handlers.ranking,
     'headshots': handlers.headshots,
@@ -72,7 +104,8 @@ HANDLERS = {
     'blinds': handlers.blinds,
     'jumps': handlers.jumps,
     'radios': handlers.radios,
-    'weapons': handlers.weapons
+    'weapons': handlers.weapons,
+    'update_gist': write_rank_to_gist
 }
 
 class Bot(object):
