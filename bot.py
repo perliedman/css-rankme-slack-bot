@@ -64,6 +64,7 @@ def write_rank_to_gist(_, connection, **kwargs):
     ghgist = Simplegist(username=gist_username, api_token=api_token)
     ghgist.profile().edit(id=gist_id, content=text)
 
+    return 'Wrote:\n\n```%s```' % text
 
 class SlackGameTracker(GameTracker):
     def __init__(self, slack_client, db_connection):
