@@ -240,7 +240,7 @@ def weapons(command, _, log_db_connection):
         inner join players on steam_id = indirect_id
         where
             type = 'player_death'
-            and name = '""" + name + """';
+            and name = '""" + name.replace("'", r"''") + """';
     """).fetchall()
 
     weapon_stats = [json.loads(data[0].decode('utf-8'))['weapon'] for data in kills]
