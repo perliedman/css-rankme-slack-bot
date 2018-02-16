@@ -30,6 +30,8 @@ def ranking(command, connection, **kwargs):
 
     if name == 'orderby kdr':
         name = 'kdr'
+    elif name == 'orderby score/r':
+        name = 'spr'
     else:
         name = 'score'
 
