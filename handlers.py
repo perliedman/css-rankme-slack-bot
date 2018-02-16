@@ -149,7 +149,8 @@ def skill(_, __, log_db_connection):
         from rounds 
         where win_team is not null and lose_team is not null 
         order by id""").fetchall()
-    rounds = [(json.loads(win_team.decode('utf-8')), json.loads(lose_team.decode('utf-8'))) for (win_team, lose_team) in rounds]
+    rounds = [(set(json.loads(win_team.decode('utf-8'))),
+               set(json.loads(lose_team.decode('utf-8')))) for (win_team, lose_team) in rounds]
 
     skills = get_skill_ranking(rounds)
     players = dict(cursor.execute('select steam_id, name from players').fetchall())
