@@ -28,13 +28,18 @@ def ranking(command, connection, **kwargs):
     except IndexError:
         raise HandlerInputException('Error')
 
+    order = 'desc'
+
     if name == 'orderby kdr':
         name = 'kdr'
     elif name == 'orderby score/r':
         name = 'spr'
+    elif name == 'orderby nick':
+        name = 'name'
+        order = 'asc'
     else:
         name = 'score'
-
+        
     score_table = format_list(connection, """
         select
             name, 
@@ -48,7 +53,7 @@ def ranking(command, connection, **kwargs):
                 else 0
             end as kdr
         from rankme 
-        order by %s desc""" %(name),
+        order by %s %s""" %(name, order),
                               '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
                               '%2d.%20s%8.02f%6d%6.02f')
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
