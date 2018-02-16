@@ -21,7 +21,18 @@ def format_list(connection, query, header, format_str, params=()):
 
     return '\n'.join(lines)
 
-def ranking(_, connection, **kwargs):
+def ranking(command, connection, **kwargs):
+    args = command.split(' ')
+    try:
+        name = ' '.join(args[1:])
+    except IndexError:
+        raise HandlerInputException('Error')
+
+    if name == 'orderby kdr':
+        name = 'kdr'
+    else:
+        name = 'score'
+
     score_table = format_list(connection, """
         select
             name, 
@@ -35,7 +46,7 @@ def ranking(_, connection, **kwargs):
                 else 0
             end as kdr
         from rankme 
-        order by score desc""",
+        order by %s desc""" %(name),
                               '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
                               '%2d.%20s%8.02f%6d%6.02f')
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
