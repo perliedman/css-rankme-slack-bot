@@ -154,7 +154,11 @@ def skill(command, __, log_db_connection):
         select win_team, lose_team 
         from rounds 
         where win_team is not null and lose_team is not null 
-        order by id""" + (' limit %d' % last if last else '')).fetchall()
+        order by id""").fetchall()
+
+    if last:
+        rounds = rounds[-last:]
+
     rounds = [(set(json.loads(win_team.decode('utf-8'))),
                set(json.loads(lose_team.decode('utf-8')))) for (win_team, lose_team) in rounds]
 
