@@ -142,13 +142,19 @@ def history(_, connection, **kwargs):
     ]
 
 
-def skill(_, __, log_db_connection):
+def skill(command, __, log_db_connection):
+    parts = command.split(' ')
+    if len(parts) > 1:
+        last = int(parts[1])
+    else:
+        last = None
+
     cursor = log_db_connection.cursor()
     rounds = cursor.execute("""
         select win_team, lose_team 
         from rounds 
         where win_team is not null and lose_team is not null 
-        order by id""").fetchall()
+        order by id""" + (' limit %d' % last if last else '')).fetchall()
     rounds = [(set(json.loads(win_team.decode('utf-8'))),
                set(json.loads(lose_team.decode('utf-8')))) for (win_team, lose_team) in rounds]
 
@@ -158,7 +164,8 @@ def skill(_, __, log_db_connection):
 
     return '```' + \
         '%23s%6s' % ('Nick', 'Skill') + '\n' + \
-        '\n'.join(['%2d.%20s%6.0f' % (i, players[steam_id], rating.mu - 3 * rating.sigma) for (i, (steam_id, rating)) in leaderboard]) + \
+        '\n'.join(['%2d.%20s%6.0f' % (i, players[steam_id], rating.mu - 3 * rating.sigma)
+                   for (i, (steam_id, rating)) in leaderboard]) + \
         '```'
 
 def killers(_, __, log_db_connection):
