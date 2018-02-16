@@ -13,6 +13,8 @@ def get_skill_ranking(rounds):
     players = defaultdict(skiller.create_rating)
 
     for (winners, losers) in rounds:
+        if len(winners.intersection(losers)) > 0:
+            raise Exception('Teams have overlapping members:\n%s\n%s' % (winners, losers))
         win_team = [players[p] for p in winners]
         lose_team = [players[p] for p in losers]
 
