@@ -337,7 +337,7 @@ def make_teams(command, connection, **kwargs):
         nicks = nicks + guests
 
     unfiltered_candidates = bestPack(nicks)
-    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 20]
+    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 10]
     if len(candidates) == 0:
         candidates = [unfiltered_candidates[0]]
 
