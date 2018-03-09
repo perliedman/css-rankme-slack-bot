@@ -53,7 +53,7 @@ def ranking(command, connection, **kwargs):
                 else 0
             end as kdr
         from rankme 
-        order by %s %s""" %(name, order),
+        order by %s collate nocase %s""" %(name, order),
                               '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
                               '%2d.%20s%8.02f%6d%6.02f')
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
