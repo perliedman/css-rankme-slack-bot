@@ -18,7 +18,7 @@ def bestPack(items):
                 t2.append(n[0])
                 ts2 += n[1]**skillFactor
             b = b << 1
-        diff = abs(ts1 - ts2) *  (1 + math.ceil((abs(len(t1) - len(t2)) / 2)))
+        diff = abs(ts1 - ts2) *  (1 + math.ceil((abs(len(t1) - len(t2)) / 2.0)))
         teams.append(((t1, t2), diff))
 
     teams.sort(lambda a, b: cmp(a[1], b[1]))
