@@ -23,4 +23,4 @@ def bestPack(items):
 
     teams.sort(lambda a, b: cmp(a[1], b[1]))
 
-    return teamspython 
+    return teams
