@@ -313,19 +313,25 @@ def make_teams(command, connection, **kwargs):
 
         return guests
 
+    use_kdr = re.search('\\skdr\\s', command)
+    scoring = '''case
+                when deaths > 0 then cast(kills as float)/deaths 
+                else 0
+            end as score''' if use_kdr else 'score'
+    diff_per_player = 0.1 if use_kdr else 10
     excludes = re.search('exclude(s|) (([^,;]+,*\\s*)+)', command)
     includes = re.search('include(s|) (([^,;]+,*\\s*)+)', command)
     guests = re.search('guest(s|) (([^,;]+,*\\s*)+)', command)
     if excludes:
         params = [s.lower() for s in re.split(',\\s*', excludes.group(2))]
-        sql = 'select name, score from rankme where lower(name) not in (' + \
+        sql = ('select name, %s from rankme where lower(name) not in (' % scoring) + \
              ','.join('?'*len(params)) + ')'
     elif includes:
         params = [s.lower() for s in re.split(',\\s*', includes.group(2))]
-        sql = 'select name, score from rankme where lower(name) in (' + \
+        sql = ('select name, %s from rankme where lower(name) in (' % scoring) + \
              ','.join('?'*len(params)) + ')'
     else:
-        sql = 'select name, score from rankme'
+        sql = 'select name, %s from rankme' % scoring
         params = []
 
     cursor = connection.cursor()
@@ -337,7 +343,7 @@ def make_teams(command, connection, **kwargs):
         nicks = nicks + guests
 
     unfiltered_candidates = bestPack(nicks)
-    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * 10]
+    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * diff_per_player]
     if len(candidates) == 0:
         candidates = [unfiltered_candidates[0]]
 
@@ -350,7 +356,7 @@ def make_teams(command, connection, **kwargs):
         return '*%s*:\n\n%s\n\n' % (side, '\n'.join(['* ' + n for n in team]))
 
     return print_team(side1, team1) + '\n' + print_team(side2, team2) + \
-        '\n\nTeam difference: ' + str(team_diff)
+        '\n\nTeam difference: %.1f' % team_diff
 
 if __name__ == "__main__":
     db_connection = sqlite3.connect('sample_db.sq3')
