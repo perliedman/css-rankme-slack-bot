@@ -328,10 +328,9 @@ def clean_weapon_stats(weapon_stats_dict):
 def restart_server(command, _, **kwargs):
     try:
         pid = get_pid('run-server.sh')
-    except Exception, e:
-        raise Exception('Could not find pid of run-server.sh: %s' % str(e))
-
-    call(["kill", "-TERM", '--', str(-pid)])
+        call(["kill", "-TERM", '--', str(-pid)])
+    except:
+        pass
 
     args = command.split(' ')
     start_level = args[1]
@@ -340,7 +339,7 @@ def restart_server(command, _, **kwargs):
 
     os.system('/home/cstrk/run-server.sh %s &' % start_level)
 
-    return 'Killed process group %d and I think we are now running %s' % (pid, args[1])
+    return '%sI think we are now running %s' % ('Killed process group %d and ' % pid if pid else '', args[1])
 
 
 def make_teams(command, connection, **kwargs):
