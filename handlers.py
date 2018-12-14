@@ -335,7 +335,7 @@ def restart_server(command, _, **kwargs):
 
     args = command.split(' ')
     start_level = args[1]
-    if not re.match(r'^[A-Za-z_]+$', start_level):
+    if not re.match(r'^[A-Za-z0-9_]+$', start_level):
         raise Exception('That does not look like a proper level name.')
 
     os.system('/home/cstrk/run-server.sh %s &' % start_level)
