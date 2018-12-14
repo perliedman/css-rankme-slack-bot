@@ -11,7 +11,7 @@ import handlers
 from custom_exceptions import HandlerInputException
 
 
-def parse_slack_output(slack_rtm_output):
+def parse_slack_output(slack_rtm_output, at_bot):
     """
         The Slack Real Time Messaging API is an events firehose.
         this parsing function returns None unless a message is
@@ -20,9 +20,9 @@ def parse_slack_output(slack_rtm_output):
     output_list = slack_rtm_output
     if output_list and len(output_list) > 0:
         for output in output_list:
-            if output and 'text' in output and AT_BOT in output['text']:
+            if output and 'text' in output and at_bot in output['text']:
                 # return text after the @ mention, whitespace removed
-                return output['text'].split(AT_BOT)[1].strip().lower(), \
+                return output['text'].split(at_bot)[1].strip().lower(), \
                     output['channel']
     return None, None
 
@@ -120,12 +120,16 @@ HANDLERS = {
 
 
 class Bot(object):
-    def __init__(self, bot_token, db_path, log_db_path):
+    def __init__(self, bot_token, bot_name, db_path, log_db_path):
         self._slack_client = SlackClient(bot_token)
         self._db_connection = sqlite3.connect(db_path)
         self._log_db_connection = sqlite3.connect(log_db_path)
         self._game_tracker = SlackGameTracker(
             self._slack_client, self._db_connection)
+
+        bot_id = self._slack_client.api_call("auth.test")["user_id"]
+
+        self._at_bot = "<@" + bot_id + ">"
 
     def run(self):
         if self._slack_client.rtm_connect():
@@ -138,7 +142,7 @@ class Bot(object):
                 count += 1
 
                 command, channel = parse_slack_output(
-                    self._slack_client.rtm_read())
+                    self._slack_client.rtm_read(), self._at_bot)
                 if command and channel:
                     self._handle_command(command, channel)
                 time.sleep(READ_WEBSOCKET_DELAY)
@@ -174,15 +178,14 @@ class Bot(object):
 
 if __name__ == "__main__":
     # constants
-    BOT_ID = os.environ.get("BOT_ID")
+    BOT_NAME = os.environ.get("BOT_NAME")
     BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
-    AT_BOT = "<@" + BOT_ID + ">"
     CHANNEL = '#lanparty'
     READ_WEBSOCKET_DELAY = 1  # 1 second delay between reading from firehose
 
     while True:
         try:
-            Bot(BOT_TOKEN, sys.argv[1], sys.argv[2]).run()
+            Bot(BOT_TOKEN, BOT_NAME, sys.argv[1], sys.argv[2]).run()
         except:
             print 'Unexpected error; sleeping one minute.'
             print traceback.format_exc()
