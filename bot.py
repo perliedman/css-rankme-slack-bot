@@ -10,6 +10,7 @@ from game_tracker import GameTracker
 import handlers
 from custom_exceptions import HandlerInputException
 
+
 def parse_slack_output(slack_rtm_output):
     """
         The Slack Real Time Messaging API is an events firehose.
@@ -25,20 +26,24 @@ def parse_slack_output(slack_rtm_output):
                     output['channel']
     return None, None
 
+
 def cleanup(slack_client, connection):
     cursor = connection.cursor()
     invalids = cursor.execute('select name from rankme where steam=?',
                               ('STEAM_ID_STOP_IGNORING_RETVALS',)).fetchall()
 
     if len(invalids):
-        cursor.execute('delete from rankme where steam=?', ('STEAM_ID_STOP_IGNORING_RETVALS',))
-        cursor.execute('delete from game_stats where steam=?', ('STEAM_ID_STOP_IGNORING_RETVALS',))
+        cursor.execute('delete from rankme where steam=?',
+                       ('STEAM_ID_STOP_IGNORING_RETVALS',))
+        cursor.execute('delete from game_stats where steam=?',
+                       ('STEAM_ID_STOP_IGNORING_RETVALS',))
 
         slack_client.api_call('chat.postMessage', channel=CHANNEL,
                               text='I cleaned up these FAKE USERS: ' +
                               ', '.join([i[0] for i in invalids]) +
                               '. SAD!',
                               as_user=True)
+
 
 def write_rank_to_gist(_, connection, **kwargs):
     api_token = os.environ.get('GITHUB_API_TOKEN')
@@ -66,6 +71,7 @@ def write_rank_to_gist(_, connection, **kwargs):
 
     return 'Wrote:\n\n```%s```' % text
 
+
 class SlackGameTracker(GameTracker):
     def __init__(self, slack_client, db_connection):
         GameTracker.__init__(self, db_connection)
@@ -80,7 +86,8 @@ class SlackGameTracker(GameTracker):
         print 'The game has ended'
         self._slack_client.api_call("chat.postMessage", channel=CHANNEL,
                                     text='Game over man! Game over!\n\n' +
-                                    handlers.last_game('', self._connection) + '\n',
+                                    handlers.last_game(
+                                        '', self._connection) + '\n',
                                     as_user=True)
 
         try:
@@ -88,6 +95,7 @@ class SlackGameTracker(GameTracker):
         except Exception, e:
             print 'Unexpected error updating gist.'
             print traceback.format_exc()
+
 
 HANDLERS = {
     'ranking': handlers.ranking,
@@ -106,15 +114,18 @@ HANDLERS = {
     'jumps': handlers.jumps,
     'radios': handlers.radios,
     'weapons': handlers.weapons,
-    'update_gist': write_rank_to_gist
+    'update_gist': write_rank_to_gist,
+    'restart': handlers.restart_server
 }
+
 
 class Bot(object):
     def __init__(self, bot_token, db_path, log_db_path):
         self._slack_client = SlackClient(bot_token)
         self._db_connection = sqlite3.connect(db_path)
         self._log_db_connection = sqlite3.connect(log_db_path)
-        self._game_tracker = SlackGameTracker(self._slack_client, self._db_connection)
+        self._game_tracker = SlackGameTracker(
+            self._slack_client, self._db_connection)
 
     def run(self):
         if self._slack_client.rtm_connect():
@@ -126,19 +137,22 @@ class Bot(object):
 
                 count += 1
 
-                command, channel = parse_slack_output(self._slack_client.rtm_read())
+                command, channel = parse_slack_output(
+                    self._slack_client.rtm_read())
                 if command and channel:
                     self._handle_command(command, channel)
                 time.sleep(READ_WEBSOCKET_DELAY)
         else:
-            raise Exception('Connection failed. Invalid Slack token or bot ID?')
+            raise Exception(
+                'Connection failed. Invalid Slack token or bot ID?')
 
     def _handle_command(self, command, channel):
         response = None
         try:
             for (command_prefix, handler) in HANDLERS.items():
                 if command.startswith(command_prefix):
-                    response = handler(command, self._db_connection, log_db_connection=self._log_db_connection)
+                    response = handler(
+                        command, self._db_connection, log_db_connection=self._log_db_connection)
                     break
         except HandlerInputException, e:
             response = 'Sorry, but you missed something:' + str(e)
@@ -147,7 +161,8 @@ class Bot(object):
             response = 'Uhm, that did not go as planned: ' + str(e)
 
         if not response:
-            response = 'Huh? Try one of ' + ', '.join(['*' + cmd + '*' for cmd in HANDLERS.keys()])
+            response = 'Huh? Try one of ' + \
+                ', '.join(['*' + cmd + '*' for cmd in HANDLERS.keys()])
 
         if isinstance(response, basestring):
             self._slack_client.api_call("chat.postMessage", channel=channel,

@@ -3,6 +3,7 @@ import sys
 import random
 import re
 import json
+import os
 
 from collections import defaultdict
 from collections import Counter
@@ -10,6 +11,12 @@ from pack import bestPack
 import linegraph
 from skill import get_skill_ranking
 from custom_exceptions import HandlerInputException
+from subprocess import check_output, call
+
+
+def get_pid(name):
+    return int(check_output(["pidof", name]))
+
 
 def format_list(connection, query, header, format_str, params=()):
     cursor = connection.cursor()
@@ -20,6 +27,7 @@ def format_list(connection, query, header, format_str, params=()):
         i += 1
 
     return '\n'.join(lines)
+
 
 def ranking(command, connection, **kwargs):
     args = command.split(' ')
@@ -39,7 +47,7 @@ def ranking(command, connection, **kwargs):
         order = 'asc'
     else:
         name = 'score'
-        
+
     score_table = format_list(connection, """
         select
             name, 
@@ -53,8 +61,9 @@ def ranking(command, connection, **kwargs):
                 else 0
             end as kdr
         from rankme 
-        order by %s collate nocase %s""" %(name, order),
-                              '%23s%8s%6s%6s' % ('Nick', 'Score/r', 'Score', 'KDR'),
+        order by %s collate nocase %s""" % (name, order),
+                              '%23s%8s%6s%6s' % (
+                                  'Nick', 'Score/r', 'Score', 'KDR'),
                               '%2d.%20s%8.02f%6d%6.02f')
     return '```\n' + score_table + '```\n:cs: :c4: :cs:'
 
@@ -74,7 +83,8 @@ def headshots(_, connection, **kwargs):
             headshots 
         from rankme 
         order by percentage desc""",
-                                  '%23s%6s%8s%6s' % ('Nick', '%', 'HShot/r', 'Total'),
+                                  '%23s%6s%8s%6s' % (
+                                      'Nick', '%', 'HShot/r', 'Total'),
                                   '%2d. %19s%6.01f%8.02f%6d')
     return '```\n' + headshots_table + '```\n:disappointed_relieved::gun:'
 
@@ -107,8 +117,9 @@ def last_game(command, connection, **kwargs):
                             pg.game_id=(select id from game order by id desc limit 100 offset ?)
                             and rounds > 0
                         order by score desc""",
-                        '%23s%7s%6s%7s%6s%5s%6s' % \
-                        ('Nick', 'Rounds', 'Kills', 'Deaths', 'KDR', 'Hit%', 'Score'),
+                        '%23s%7s%6s%7s%6s%5s%6s' %
+                        ('Nick', 'Rounds', 'Kills',
+                         'Deaths', 'KDR', 'Hit%', 'Score'),
                         '%2d. %19s%7d%6d%7d%6.02f%5.0f%6d',
                         (rel-1,))
 
@@ -163,7 +174,8 @@ def skill(command, __, log_db_connection):
                set(json.loads(lose_team.decode('utf-8')))) for (win_team, lose_team) in rounds]
 
     skills = get_skill_ranking(rounds)
-    players = dict(cursor.execute('select steam_id, name from players').fetchall())
+    players = dict(cursor.execute(
+        'select steam_id, name from players').fetchall())
     leaderboard = zip(range(1, len(skills) + 1), skills)
 
     return '```' + \
@@ -171,6 +183,7 @@ def skill(command, __, log_db_connection):
         '\n'.join(['%2d.%20s%6.0f' % (i, players[steam_id], rating.mu - 3 * rating.sigma)
                    for (i, (steam_id, rating)) in leaderboard]) + \
         '```'
+
 
 def killers(_, __, log_db_connection):
     cursor = log_db_connection.cursor()
@@ -196,34 +209,44 @@ def killers(_, __, log_db_connection):
         '\n'.join(['%2d.%13s%13s%6d' % (i, killer, killed, kills) for (i, (killer, ___, killed, kills)) in zip(range(1, len(killers)), killers)]) + \
         '```'
 
+
 def smokes(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'smokegrenade_detonate', 'No. Smokes', 'Smokes/round')
+
 
 def hes(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'hegrenade_detonate', 'No. HEs', 'HEs/round')
 
+
 def flashbangs(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'flashbang_detonate', 'No. Flashes', 'Flashes/round')
+
 
 def bomb_plants(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'bomb_planted', 'No. Plants', 'Plants/round')
 
+
 def bomb_defuses(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'bomb_defused', 'No. Defuses', 'Defuses/round')
+
 
 def blinds(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'player_blind', 'No. Blinds', 'Blinds/round')
 
+
 def jumps(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'player_jump', 'No. Jumps', 'Jumps/round')
+
 
 def radios(command, __, log_db_connection):
     return _events(command, __, log_db_connection, 'player_radio', 'No. Radios', 'Radios/round')
 
+
 def _events(command, __, log_db_connection, event, event_col_name, events_per_round_col_name):
     args = command.split(' ')
 
-    start = args[1] if len(args) > 1 and args[1] is not '' > 0 else '2017-01-01'
+    start = args[1] if len(
+        args) > 1 and args[1] is not '' > 0 else '2017-01-01'
     end = args[2] if len(args) > 2 else '2100-01-01'
 
     sql = """
@@ -249,17 +272,20 @@ def _events(command, __, log_db_connection, event, event_col_name, events_per_ro
         """
 
     table = format_list(log_db_connection, sql,
-            '%20s%12s%14s' % ('Nick', event_col_name, events_per_round_col_name),
-            '%2d. %16s%12d%14.2f', (start, end, event, start, end))
+                        '%20s%12s%14s' % (
+                            'Nick', event_col_name, events_per_round_col_name),
+                        '%2d. %16s%12d%14.2f', (start, end, event, start, end))
 
     return '```\n' + table + '\n```'
+
 
 def weapons(command, _, log_db_connection):
     args = command.split(' ')
     try:
         name = ' '.join(args[1:])
     except IndexError:
-        raise HandlerInputException('you must supply a nickname: weapons <nick>')
+        raise HandlerInputException(
+            'you must supply a nickname: weapons <nick>')
 
     cursor = log_db_connection.cursor()
 
@@ -273,7 +299,8 @@ def weapons(command, _, log_db_connection):
             and name = '""" + name.replace("'", r"''") + """';
     """).fetchall()
 
-    weapon_stats = [json.loads(data[0].decode('utf-8'))['weapon'] for data in kills]
+    weapon_stats = [json.loads(data[0].decode('utf-8'))
+                    ['weapon'] for data in kills]
     weapon_stats_dict = dict(Counter(weapon_stats))
 
     clean_weapon_stats(weapon_stats_dict)
@@ -289,12 +316,32 @@ def weapons(command, _, log_db_connection):
 
     return '```\n' + table + '```\n'
 
+
 def clean_weapon_stats(weapon_stats_dict):
     remove = ['prop_physics_multiplayer', 'world']
 
     for to_remove in remove:
         if to_remove in weapon_stats_dict:
             del weapon_stats_dict[to_remove]
+
+
+def restart_server(command, _, **kwargs):
+    try:
+        pid = get_pid('run-server.sh')
+    except Exception, e:
+        raise Exception('Could not find pid of run-server.sh: %s' % str(e))
+
+    call(["kill", "-TERM", '--', str(-pid)])
+
+    args = command.split(' ')
+    start_level = args[1]
+    if not re.match(r'^[A-Za-z_]+$', start_level):
+        raise Exception('That does not look like a proper level name.')
+
+    os.system('/home/cstrk/run-server.sh %s &' % start_level)
+
+    return 'Killed process group %d and I think we are now running %s' % (pid, args[1])
+
 
 def make_teams(command, connection, **kwargs):
     def parse_guests(guests_str):
@@ -325,11 +372,11 @@ def make_teams(command, connection, **kwargs):
     if excludes:
         params = [s.lower() for s in re.split(',\\s*', excludes.group(2))]
         sql = ('select name, %s from rankme where lower(name) not in (' % scoring) + \
-             ','.join('?'*len(params)) + ')'
+            ','.join('?'*len(params)) + ')'
     elif includes:
         params = [s.lower() for s in re.split(',\\s*', includes.group(2))]
         sql = ('select name, %s from rankme where lower(name) in (' % scoring) + \
-             ','.join('?'*len(params)) + ')'
+            ','.join('?'*len(params)) + ')'
     else:
         sql = 'select name, %s from rankme' % scoring
         params = []
@@ -343,7 +390,8 @@ def make_teams(command, connection, **kwargs):
         nicks = nicks + guests
 
     unfiltered_candidates = bestPack(nicks)
-    candidates = [(teams, d) for (teams, d) in unfiltered_candidates if d < len(nicks) * diff_per_player]
+    candidates = [(teams, d) for (teams, d)
+                  in unfiltered_candidates if d < len(nicks) * diff_per_player]
     if len(candidates) == 0:
         candidates = [unfiltered_candidates[0]]
 
@@ -358,9 +406,11 @@ def make_teams(command, connection, **kwargs):
     return print_team(side1, team1) + '\n' + print_team(side2, team2) + \
         '\n\nTeam difference: %.1f' % team_diff
 
+
 if __name__ == "__main__":
     db_connection = sqlite3.connect('sample_db.sq3')
     log_db_connection = sqlite3.connect('sample-log.db.sq3')
     command, arguments = sys.argv[1], ' '.join(sys.argv[1:])
 
-    print locals()[command](arguments, db_connection, log_db_connection=log_db_connection)
+    print locals()[command](arguments, db_connection,
+                            log_db_connection=log_db_connection)
