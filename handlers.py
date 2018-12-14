@@ -15,7 +15,7 @@ from subprocess import check_output, call
 
 
 def get_pid(name):
-    return int(check_output(["pidof", name]))
+    return int(check_output(['pidof', '-x', name]))
 
 
 def format_list(connection, query, header, format_str, params=()):
