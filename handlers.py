@@ -326,6 +326,7 @@ def clean_weapon_stats(weapon_stats_dict):
 
 
 def restart_server(command, _, **kwargs):
+    pid = None
     try:
         pid = get_pid('run-server.sh')
         call(["kill", "-TERM", '--', str(-pid)])
